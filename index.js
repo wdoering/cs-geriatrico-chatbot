@@ -3,7 +3,10 @@ import "dotenv/config";
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 const FACEIT_API_KEY = process.env.FACEIT_API_KEY;
 const DISCORD_CHANNEL_ID = process.env.DISCORD_CHANNEL_ID;
-
+//================================================================
+// cs-geriatrico-chatbot
+// to be used on Discord to scratch info from FaceIT and post in the channel
+//================================================================
 
 import express from "express";
 import { Client, GatewayIntentBits, EmbedBuilder } from "discord.js";
