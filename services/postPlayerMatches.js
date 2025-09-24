@@ -106,7 +106,17 @@ function buildMatchEmbed(match, stats) {
  * @param {Array<String>} playerIds
  */
 export async function postPlayerMatches(discordClient) {
-  const playerNickNames = ["H1GO-", "swagner-rs","ExNihilDg","GBDoNeS","Felpa_br","Georges","gusssz","perucs_","s4bot4g3"];
+  const playerNickNames = [
+    "H1GO-",
+    "swagner-rs",
+    "ExNihilDg",
+    "GBDoNeS",
+    "Felpa_br",
+    "Georges",
+    "gusssz",
+    "perucs_",
+    "s4bot4g3",
+  ];
   try {
     const postedMatches = loadPostedMatches();
 
@@ -133,9 +143,9 @@ export async function postPlayerMatches(discordClient) {
   }
 
   /**
-   * 
-   * @param {*} nickname 
-   * @returns 
+   *
+   * @param {*} nickname
+   * @returns
    */
   async function resolvePlayerId(nickname) {
     const res = await fetch(
