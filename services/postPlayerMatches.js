@@ -1,6 +1,6 @@
 import { loadPostedMatches, savePostedMatches } from "../repos/matchStore.js";
 import fetch from "node-fetch";
-import { ClientVoiceManager, EmbedBuilder } from "discord.js";
+import { EmbedBuilder } from "discord.js";
 
 const FACEIT_API_KEY = process.env.FACEIT_API_KEY;
 const DISCORD_CHANNEL_ID = process.env.DISCORD_CHANNEL_ID;
@@ -131,6 +131,12 @@ export async function postPlayerMatches(discordClient) {
   } catch (err) {
     console.error("❌ Error posting player matches:", err);
   }
+
+  /**
+   * 
+   * @param {*} nickname 
+   * @returns 
+   */
   async function resolvePlayerId(nickname) {
     const res = await fetch(
       `https://open.faceit.com/data/v4/players?nickname=${nickname}`,
