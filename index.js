@@ -16,7 +16,10 @@ const app = express();
 app.use(express.json());
 
 // FACEIT webhook endpoint
-app.post("/faceit/webhook", async () => postPlayerMatches(client));
+app.post("/faceit/webhook", async (req, res) => {
+  await postPlayerMatches(client);
+  res.json({ success: true });
+});
 
 // Discord bot startup
 client.on("clientReady", () => {
