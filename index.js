@@ -21,6 +21,12 @@ app.post("/faceit/webhook", async (req, res) => {
   res.json({ success: true });
 });
 
+// FACEIT webhook endpoint
+app.get("/fetchStats", async (req, res) => {
+  await postPlayerMatches(client);
+  res.json({ success: true });
+});
+
 // Discord bot startup
 client.on("clientReady", () => {
   console.log(`Logged in as ${client.user.tag}`);
