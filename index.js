@@ -20,6 +20,9 @@ const client = new Client({
 const app = express();
 app.use(express.json());
 
+/**
+ * @deprecated This endpoint is deprecated and may be removed in future versions.
+ */
 // FACEIT webhook endpoint
 app.post("/faceit/webhook", async (req, res) => {
   await postPlayerMatches(client);
@@ -45,7 +48,12 @@ client.on("messageCreate", async (message) => {
 
     try {
       await postPlayerMatches(client);
-      await message.channel.send("✅ Stats posted!");
+      const matchesPosted = await postPlayerMatches(client);
+      if (matchesPosted === 0) {
+        await message.channel.send("😒 No new matches posted! Are you even trying?");
+      } else {
+        await message.channel.send(`✅ ${matchesPosted} matches posted!`);
+      }
     } catch (err) {
       console.error("Error fetching stats:", err);
       await message.channel.send("❌ Failed to fetch stats.");

@@ -117,6 +117,7 @@ export async function postPlayerMatches(discordClient) {
     "perucs_",
     "s4bot4g3",
   ];
+  let postedCount = 0;
   try {
     const postedMatches = loadPostedMatches();
 
@@ -134,26 +135,29 @@ export async function postPlayerMatches(discordClient) {
         const channel = await discordClient.channels.fetch(DISCORD_CHANNEL_ID);
         await channel.send({ embeds: [embed] });
         postedMatches.add(matchId);
+        postedCount++;
       }
     }
 
-    return savePostedMatches(postedMatches);
+    savePostedMatches(postedMatches);
+    return postedCount;
   } catch (err) {
     console.error("❌ Error posting player matches:", err);
+    return postedCount;
   }
+}
 
-  /**
-   *
-   * @param {*} nickname
-   * @returns
-   */
-  async function resolvePlayerId(nickname) {
-    const res = await fetch(
-      `https://open.faceit.com/data/v4/players?nickname=${nickname}`,
-      { headers: { Authorization: `Bearer ${FACEIT_API_KEY}` } }
-    );
-    if (!res.ok) throw new Error(`Failed to resolve player ID for ${nickname}`);
-    const data = await res.json();
-    return data.player_id; // <-- UUID you actually need
-  }
+/**
+ *
+ * @param {*} nickname
+ * @returns
+ */
+async function resolvePlayerId(nickname) {
+  const res = await fetch(
+    `https://open.faceit.com/data/v4/players?nickname=${nickname}`,
+    { headers: { Authorization: `Bearer ${FACEIT_API_KEY}` } }
+  );
+  if (!res.ok) throw new Error(`Failed to resolve player ID for ${nickname}`);
+  const data = await res.json();
+  return data.player_id; // <-- UUID you actually need
 }
