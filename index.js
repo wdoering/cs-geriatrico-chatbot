@@ -1,14 +1,12 @@
 import "dotenv/config";
-
+import express from "express";
+import { Client, GatewayIntentBits } from "discord.js";
+import { postPlayerMatches } from "./services/postPlayerMatches.js";
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
-import fetchMatchStats from "./queries/fetchMatchStats.js";
 //================================================================
 // cs-geriatrico-chatbot
 // to be used on Discord to scratch info from FaceIT and post in the channel
 //==================================å==============================
-
-import express from "express";
-import { Client, GatewayIntentBits } from "discord.js";
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
@@ -18,10 +16,10 @@ const app = express();
 app.use(express.json());
 
 // FACEIT webhook endpoint
-app.post("/faceit/webhook", fetchMatchStats);
+app.post("/faceit/webhook", async () => postPlayerMatches(client));
 
 // Discord bot startup
-client.on("ready", () => {
+client.on("clientReady", () => {
   console.log(`Logged in as ${client.user.tag}`);
 });
 

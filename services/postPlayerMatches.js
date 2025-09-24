@@ -1,6 +1,6 @@
 import { loadPostedMatches, savePostedMatches } from "../repos/matchStore.js";
 import fetch from "node-fetch";
-import { EmbedBuilder } from "discord.js";
+import { ClientVoiceManager, EmbedBuilder } from "discord.js";
 
 const FACEIT_API_KEY = process.env.FACEIT_API_KEY;
 const DISCORD_CHANNEL_ID = process.env.DISCORD_CHANNEL_ID;
@@ -100,14 +100,19 @@ function buildMatchEmbed(match, stats) {
     .setTimestamp();
 }
 
-export async function postPlayerMatches(discordClient, playerIds) {
+/**
+ *
+ * @param {Object} discordClient
+ * @param {Array<String>} playerIds
+ */
+export async function postPlayerMatches(discordClient) {
+  const playerNickNames = ["H1GO-", "swagner-rs","ExNihilDg","GBDoNeS","Felpa_br","Georges","gusssz","perucs_","s4bot4g3"];
   try {
-    const channel = await discordClient.channels.fetch(DISCORD_CHANNEL_ID);
     const postedMatches = loadPostedMatches();
 
-    for (const playerId of playerIds) {
+    for (const nickname of playerNickNames) {
+      const playerId = await resolvePlayerId(nickname);
       const matchIds = await fetchLatestMatches(playerId);
-
       for (const matchId of matchIds) {
         if (postedMatches.has(matchId)) {
           console.log(`⏩ Skipping already posted match ${matchId}`);
@@ -116,14 +121,23 @@ export async function postPlayerMatches(discordClient, playerIds) {
 
         const { match, stats } = await fetchMatchDetails(matchId);
         const embed = buildMatchEmbed(match, stats);
-
+        const channel = await discordClient.channels.fetch(DISCORD_CHANNEL_ID);
         await channel.send({ embeds: [embed] });
         postedMatches.add(matchId);
       }
     }
 
-    savePostedMatches(postedMatches);
+    return savePostedMatches(postedMatches);
   } catch (err) {
     console.error("❌ Error posting player matches:", err);
+  }
+  async function resolvePlayerId(nickname) {
+    const res = await fetch(
+      `https://open.faceit.com/data/v4/players?nickname=${nickname}`,
+      { headers: { Authorization: `Bearer ${FACEIT_API_KEY}` } }
+    );
+    if (!res.ok) throw new Error(`Failed to resolve player ID for ${nickname}`);
+    const data = await res.json();
+    return data.player_id; // <-- UUID you actually need
   }
 }
