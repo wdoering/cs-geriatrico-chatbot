@@ -9,8 +9,13 @@ const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 //==================================å==============================
 
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent, // 👈 required to read messages
+  ],
 });
+
 
 const app = express();
 app.use(express.json());
@@ -31,6 +36,23 @@ app.get("/fetchStats", async (req, res) => {
 client.on("clientReady", () => {
   console.log(`Logged in as ${client.user.tag}`);
 });
+client.on("messageCreate", async (message) => {
+  // Ignore bot messages
+  if (message.author.bot) return;
+
+  if (message.content === "!stats") {
+    await message.channel.send("Fetching stats... ⏳");
+
+    try {
+      await postPlayerMatches(client);
+      await message.channel.send("✅ Stats posted!");
+    } catch (err) {
+      console.error("Error fetching stats:", err);
+      await message.channel.send("❌ Failed to fetch stats.");
+    }
+  }
+});
+
 
 client.login(DISCORD_TOKEN);
 
