@@ -7,7 +7,7 @@ const DISCORD_CHANNEL_ID = process.env.DISCORD_CHANNEL_ID;
 // cs-geriatrico-chatbot
 // to be used on Discord to scratch info from FaceIT and post in the channel
 //================================================================
-
+// https://discord.com/channels/283369379750608898/1418571459005255722
 import express from "express";
 import { Client, GatewayIntentBits, EmbedBuilder } from "discord.js";
 import fetch from "node-fetch";
@@ -34,6 +34,7 @@ const roasts = [
 // FACEIT webhook endpoint
 app.post("/faceit/webhook", async (req, res) => {
   try {
+    console.log("Vai tentar buscar uma match")
     const { payload } = req.body;
     if (!payload) return res.sendStatus(400);
 
@@ -122,7 +123,7 @@ app.post("/faceit/webhook", async (req, res) => {
 });
 
 // Discord bot startup
-client.on("ready", () => {
+client.on("clientReady", () => {
   console.log(`Logged in as ${client.user.tag}`);
 });
 
