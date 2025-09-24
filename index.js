@@ -50,7 +50,7 @@ client.on("messageCreate", async (message) => {
       await postPlayerMatches(client);
       const matchesPosted = await postPlayerMatches(client);
       if (matchesPosted === 0) {
-        await message.channel.send("😒 No new matches posted! Are you even trying?");
+        await message.channel.send("😒 Vcs sao mto fracos! Tudo pau mandado!!!");
       } else {
         await message.channel.send(`✅ ${matchesPosted} matches posted!`);
       }
