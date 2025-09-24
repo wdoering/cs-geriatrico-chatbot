@@ -39,6 +39,26 @@ app.get("/fetchStats", async (req, res) => {
 client.on("clientReady", () => {
   console.log(`Logged in as ${client.user.tag}`);
 });
+
+const roasts = [
+  "Bando de aposentado, até a tartaruga entra mais rápido no servidor!",
+  "Vocês acham que CS é igual vinho? Quanto mais velho, melhor? Só estão azedando...",
+  "Time Nutella: mais desculpa que kill.",
+  "Cadê os guerreiros? Viraram clã de bingo agora?",
+  "Esse grupo aqui é só lobby de espera do INSS.",
+  "De tanto sumirem, já já o Faceit manda busca e apreensão.",
+  "Vocês só aparecem pra pedir drop de AK, nunca pra jogar.",
+  "Pior que bot do warmup: não atira, não entra e ainda some.",
+  "Mais fácil achar servidor 128 tick do que ver vocês logados.",
+  "Tá virando grupo de zap de família, só figurinha e nada de bala.",
+  "Vocês estão jogando CS ou simulador de desculpa?",
+  "Quem não aparece hoje paga a cerveja na próxima LAN.",
+  "Vocês estão confundindo treino com cochilo da tarde.",
+  "Bando de camper de vida real: ninguém dá as caras.",
+  "Se tivesse ranking de sumiço, já estavam global elite.",
+  "😒 Vcs sao mto fracos! Tudo pau mandado!!!"
+];
+
 client.on("messageCreate", async (message) => {
   // Ignore bot messages
   if (message.author.bot) return;
@@ -50,7 +70,9 @@ client.on("messageCreate", async (message) => {
       await postPlayerMatches(client);
       const matchesPosted = await postPlayerMatches(client);
       if (matchesPosted === 0) {
-        await message.channel.send("😒 Vcs sao mto fracos! Tudo pau mandado!!!");
+        roasts.push();
+        const randomRoast = roasts[Math.floor(Math.random() * roasts.length)];
+        await message.channel.send(randomRoast);
       } else {
         await message.channel.send(`✅ ${matchesPosted} matches posted!`);
       }
@@ -63,6 +85,7 @@ client.on("messageCreate", async (message) => {
 
 
 client.login(DISCORD_TOKEN);
+
 
 // Start webhook server
 app.listen(3000, () => console.log("Webhook server running on port 3000"));
