@@ -20,7 +20,7 @@ const roasts = [
 // Fetch latest 3 matches for a given playerId
 async function fetchLatestMatches(playerId) {
   const res = await fetch(
-    `https://open.faceit.com/data/v4/players/${playerId}/history?game=cs2&offset=0&limit=3`,
+    `https://open.faceit.com/data/v4/players/${playerId}/history?game=cs2&offset=0&limit=1`,
     {
       headers: { Authorization: `Bearer ${FACEIT_API_KEY}` },
     }
@@ -52,8 +52,8 @@ function buildMatchEmbed(match, stats) {
   const map = match.voting.map.pick[0];
   const team1 = match.teams.faction1.name;
   const team2 = match.teams.faction2.name;
-  const score1 = match.results.score.faction1;
-  const score2 = match.results.score.faction2;
+  const score1 = stats.rounds[0].teams[0].team_stats["Final Score"];
+  const score2 = stats.rounds[0].teams[1].team_stats["Final Score"];
 
   const team1Players = stats.rounds[0].teams[0].players;
   const team2Players = stats.rounds[0].teams[1].players;
@@ -122,9 +122,22 @@ export async function postPlayerMatches(client, playerIds) {
 
       for (const matchId of matchIds) {
         const { match, stats } = await fetchMatchDetails(matchId);
-        const embed = buildMatchEmbed(match, stats);
 
-        await channel.send({ embeds: [embed] });
+        // Collect all player nicknames in the match
+        const team1Players = stats.rounds[0].teams[0].players;
+        const team2Players = stats.rounds[0].teams[1].players;
+        const allNicknames = [...team1Players, ...team2Players].map(p => p.nickname.toLowerCase());
+
+        // Count how many of the provided playerIds participated (by nickname)
+        // You may need to map playerIds to nicknames if you have that info
+        const participatingCount = playerIds.filter(id =>
+          allNicknames.includes(id.toLowerCase())
+        ).length;
+
+        if (participatingCount >= 2) {
+          const embed = buildMatchEmbed(match, stats);
+          await channel.send({ embeds: [embed] });
+        }
       }
     }
   } catch (err) {

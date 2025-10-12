@@ -67,7 +67,6 @@ client.on("messageCreate", async (message) => {
     await message.channel.send("Fetching stats... ⏳");
 
     try {
-      await postPlayerMatches(client);
       const matchesPosted = await postPlayerMatches(client);
       if (matchesPosted === 0) {
         roasts.push();
