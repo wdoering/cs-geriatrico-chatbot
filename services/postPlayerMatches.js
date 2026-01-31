@@ -18,7 +18,7 @@ const roasts = [
 
 async function fetchLatestMatches(playerId) {
   const res = await fetch(
-    `https://open.faceit.com/data/v4/players/${playerId}/history?game=cs2&offset=0&limit=3`,
+    `https://open.faceit.com/data/v4/players/${playerId}/history?game=cs2&offset=0&limit=1`,
     { headers: { Authorization: `Bearer ${FACEIT_API_KEY}` } }
   );
   if (!res.ok) throw new Error(`Failed to fetch history for ${playerId}`);
@@ -106,16 +106,21 @@ function buildMatchEmbed(match, stats) {
  * @param {Array<String>} playerIds
  */
 export async function postPlayerMatches(discordClient) {
-  const playerNickNames = [
-    "H1GO-",
+  // const playerNickNames = [
+  //   "H1GO-",
+  //   "swagner-rs",
+  //   "ExNihilDg",
+  //   "GBDoNeS",
+  //   "Felpa_br",
+  //   "Georges",
+  //   "gusssz",
+  //   "perucs_",
+  //   "s4bot4g3",
+  // ];
+    const playerNickNames = [
     "swagner-rs",
-    "ExNihilDg",
-    "GBDoNeS",
-    "Felpa_br",
     "Georges",
-    "gusssz",
-    "perucs_",
-    "s4bot4g3",
+    "gusssz"
   ];
   let postedCount = 0;
   try {
@@ -124,19 +129,25 @@ export async function postPlayerMatches(discordClient) {
     for (const nickname of playerNickNames) {
       const playerId = await resolvePlayerId(nickname);
       const matchIds = await fetchLatestMatches(playerId);
-      for (const matchId of matchIds) {
-        if (postedMatches.has(matchId)) {
-          console.log(`⏩ Skipping already posted match ${matchId}`);
-          continue;
-        }
 
-        const { match, stats } = await fetchMatchDetails(matchId);
-        const embed = buildMatchEmbed(match, stats);
-        const channel = await discordClient.channels.fetch(DISCORD_CHANNEL_ID);
-        await channel.send({ embeds: [embed] });
-        postedMatches.add(matchId);
-        postedCount++;
+      // Only consider the very latest match to avoid spamming
+      const latestMatchId = matchIds[0];
+      if (!latestMatchId) {
+        console.log(`No matches found for ${nickname}`);
+        continue;
       }
+
+      if (postedMatches.has(latestMatchId)) {
+        console.log(`⏩ Skipping already posted match ${latestMatchId}`);
+        continue;
+      }
+
+      const { match, stats } = await fetchMatchDetails(latestMatchId);
+      const embed = buildMatchEmbed(match, stats);
+      const channel = await discordClient.channels.fetch(DISCORD_CHANNEL_ID);
+      await channel.send({ embeds: [embed] });
+      postedMatches.add(latestMatchId);
+      postedCount++;
     }
 
     savePostedMatches(postedMatches);
