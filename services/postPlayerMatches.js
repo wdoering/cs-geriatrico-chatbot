@@ -17,13 +17,20 @@ const roasts = [
 ];
 
 async function fetchLatestMatches(playerId) {
+  const now = Math.floor(Date.now() / 1000); // current time in seconds
+  const thirtySixHoursAgo = now - 36 * 60 * 60; // 36 hours in seconds
+
   const res = await fetch(
-    `https://open.faceit.com/data/v4/players/${playerId}/history?game=cs2&offset=0&limit=1`,
+    `https://open.faceit.com/data/v4/players/${playerId}/history?game=cs2&offset=0&limit=20&from=${thirtySixHoursAgo}&to=${now}`,
     { headers: { Authorization: `Bearer ${FACEIT_API_KEY}` } }
   );
   if (!res.ok) throw new Error(`Failed to fetch history for ${playerId}`);
   const data = await res.json();
-  return data.items.map((m) => m.match_id);
+
+  // Defensive filter in case the API ignores from/to
+  return (data.items || [])
+    .filter((m) => (m.created_at || 0) >= thirtySixHoursAgo && (m.created_at || 0) <= now)
+    .map((m) => m.match_id);
 }
 
 async function fetchMatchDetails(matchId) {
