@@ -52,6 +52,7 @@ function buildMatchEmbed(match, stats) {
   const map = match.voting.map.pick[0];
   const team1 = match.teams.faction1.name;
   const team2 = match.teams.faction2.name;
+  console.log(stats.round);
   const score1 = stats.rounds[0].teams[0].team_stats["Final Score"];
   const score2 = stats.rounds[0].teams[1].team_stats["Final Score"];
 
