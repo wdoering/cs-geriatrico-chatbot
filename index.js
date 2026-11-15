@@ -1,5 +1,6 @@
 import "dotenv/config";
 import express from "express";
+import crypto from "node:crypto";
 import { Client, GatewayIntentBits } from "discord.js";
 import { postPlayerMatches } from "./services/postPlayerMatches.js";
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
@@ -18,7 +19,8 @@ const client = new Client({
 
 
 const app = express();
-app.use(express.json());
+app.disable("x-powered-by");
+app.use(express.json({ limit: "10kb" }));
 
 /**
  * @deprecated This endpoint is deprecated and may be removed in future versions.
@@ -36,13 +38,36 @@ app.get("/fetchStats", async (req, res) => {
 });
 
 /**
- * Broadcast endpoint - sends a message to the Discord group channel
+ * Broadcast endpoint - sends a message to the Discord group channel.
+ * Requires: Authorization: Bearer <BROADCAST_API_TOKEN>
  */
+function hasValidBroadcastToken(authorization) {
+  const expectedToken = process.env.BROADCAST_API_TOKEN;
+  if (!expectedToken || typeof authorization !== "string") return false;
+
+  const match = authorization.match(/^Bearer\s+(.+)$/i);
+  if (!match) return false;
+
+  const suppliedToken = Buffer.from(match[1]);
+  const expectedTokenBuffer = Buffer.from(expectedToken);
+  return suppliedToken.length === expectedTokenBuffer.length &&
+    crypto.timingSafeEqual(suppliedToken, expectedTokenBuffer);
+}
+
 app.post("/broadcast", async (req, res) => {
+  if (!process.env.BROADCAST_API_TOKEN) {
+    console.error("BROADCAST_API_TOKEN is not configured");
+    return res.status(503).json({ error: "Broadcast service is not configured" });
+  }
+
+  if (!hasValidBroadcastToken(req.get("authorization"))) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
   const { text } = req.body;
   
-  if (!text || typeof text !== 'string') {
-    return res.status(400).json({ error: "Invalid request. Please provide a 'text' field." });
+  if (!text || typeof text !== 'string' || text.length > 2000) {
+    return res.status(400).json({ error: "Invalid request. Provide a text field up to 2,000 characters." });
   }
 
   try {
