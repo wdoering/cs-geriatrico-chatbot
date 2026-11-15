@@ -6,7 +6,8 @@ Hosted on Render: https://dashboard.render.com/web/srv-d39utvh5pdvs73boqmkg
 
 ## Endpoints
 - POST /faceit/webhook — FaceIT webhook endpoint (returns JSON 200)
-- GET  /fetchStats       — Manual trigger to fetch/post latest stats
+- GET  /fetchStats      — Manual trigger to fetch/post latest stats
+- POST /broadcast       — Send arbitrary text messages to the configured Discord channel
 
 ## Environment
 Create a `.env` with:
