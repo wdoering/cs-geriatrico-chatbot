@@ -35,6 +35,38 @@ app.get("/fetchStats", async (req, res) => {
   res.json({ success: true });
 });
 
+/**
+ * Broadcast endpoint - sends a message to the Discord group channel
+ */
+app.post("/broadcast", async (req, res) => {
+  const { text } = req.body;
+  
+  if (!text || typeof text !== 'string') {
+    return res.status(400).json({ error: "Invalid request. Please provide a 'text' field." });
+  }
+
+  try {
+    const channel = await client.channels.fetch(process.env.DISCORD_CHANNEL_ID);
+    if (!channel) {
+      console.error("Channel not found!");
+      return res.status(500).json({ error: "Discord channel not accessible" });
+    }
+
+    // Send the message to the channel
+    const sentMessage = await channel.send({ content: text });
+    
+    console.log(`Broadcasted message to Discord: ${sentMessage.id}`);
+    res.json({ 
+      success: true, 
+      messageId: sentMessage.id,
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    console.error("Error broadcasting message:", err);
+    res.status(500).json({ error: "Failed to broadcast message", details: err.message });
+  }
+});
+
 // Discord bot startup
 client.on("clientReady", () => {
   console.log(`Logged in as ${client.user.tag}`);
