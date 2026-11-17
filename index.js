@@ -1,8 +1,10 @@
 import "dotenv/config";
 import express from "express";
-import crypto from "node:crypto";
 import { Client, GatewayIntentBits } from "discord.js";
 import { postPlayerMatches } from "./services/postPlayerMatches.js";
+import { createWeeklyReporter, startWeeklyReportScheduler, WeeklyReportBusyError } from "./services/postWeeklyReport.js";
+import { requireBroadcastAuthorization } from "./http/broadcastAuthorization.js";
+import { weeklyReportRouter } from "./http/weeklyReport.js";
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 //================================================================
 // cs-geriatrico-chatbot
@@ -21,6 +23,8 @@ const client = new Client({
 const app = express();
 app.disable("x-powered-by");
 app.use(express.json({ limit: "10kb" }));
+const weeklyReporter = createWeeklyReporter(client);
+app.use(weeklyReportRouter(weeklyReporter, () => client.isReady()));
 
 /**
  * @deprecated This endpoint is deprecated and may be removed in future versions.
@@ -41,29 +45,7 @@ app.get("/fetchStats", async (req, res) => {
  * Broadcast endpoint - sends a message to the Discord group channel.
  * Requires: Authorization: Bearer <BROADCAST_API_TOKEN>
  */
-function hasValidBroadcastToken(authorization) {
-  const expectedToken = process.env.BROADCAST_API_TOKEN;
-  if (!expectedToken || typeof authorization !== "string") return false;
-
-  const match = authorization.match(/^Bearer\s+(.+)$/i);
-  if (!match) return false;
-
-  const suppliedToken = Buffer.from(match[1]);
-  const expectedTokenBuffer = Buffer.from(expectedToken);
-  return suppliedToken.length === expectedTokenBuffer.length &&
-    crypto.timingSafeEqual(suppliedToken, expectedTokenBuffer);
-}
-
-app.post("/broadcast", async (req, res) => {
-  if (!process.env.BROADCAST_API_TOKEN) {
-    console.error("BROADCAST_API_TOKEN is not configured");
-    return res.status(503).json({ error: "Broadcast service is not configured" });
-  }
-
-  if (!hasValidBroadcastToken(req.get("authorization"))) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
-
+app.post("/broadcast", requireBroadcastAuthorization, async (req, res) => {
   const { text } = req.body;
   
   if (!text || typeof text !== 'string' || text.length > 2000) {
@@ -93,8 +75,13 @@ app.post("/broadcast", async (req, res) => {
 });
 
 // Discord bot startup
-client.on("clientReady", () => {
+client.once("clientReady", () => {
   console.log(`Logged in as ${client.user.tag}`);
+  try {
+    startWeeklyReportScheduler(weeklyReporter);
+  } catch (error) {
+    console.error("Weekly scheduler could not start:", error);
+  }
 });
 
 const roasts = [
@@ -119,6 +106,21 @@ const roasts = [
 client.on("messageCreate", async (message) => {
   // Ignore bot messages
   if (message.author.bot) return;
+
+  if (message.content.trim().toLowerCase() === "!weekly") {
+    // Only members of the configured channel can trigger a group report.
+    if (message.channelId !== process.env.DISCORD_CHANNEL_ID) return;
+    try {
+      await message.channel.send("📋 Preparando o boletim semanal do geriátrico…");
+      await weeklyReporter.post();
+    } catch (error) {
+      console.error("Error posting weekly report:", error);
+      await message.channel.send(error instanceof WeeklyReportBusyError
+        ? "⏳ O boletim já está sendo preparado. Segura a bengala!"
+        : "❌ Não consegui preparar o boletim semanal. Tente novamente em instantes.");
+    }
+    return;
+  }
 
   if (message.content === "!stats") {
     await message.channel.send("Fetching stats... ⏳");

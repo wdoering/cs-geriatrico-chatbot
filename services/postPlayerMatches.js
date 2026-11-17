@@ -1,6 +1,7 @@
 import { loadPostedMatches, savePostedMatches } from "../repos/matchStore.js";
 import fetch from "node-fetch";
 import { EmbedBuilder } from "discord.js";
+import { playerNicknames } from "../config/players.js";
 
 const FACEIT_API_KEY = process.env.FACEIT_API_KEY;
 const DISCORD_CHANNEL_ID = process.env.DISCORD_CHANNEL_ID;
@@ -113,23 +114,11 @@ function buildMatchEmbed(match, stats) {
  * @param {Array<String>} playerIds
  */
 export async function postPlayerMatches(discordClient) {
-  const playerNickNames = [
-    "H1GO-",
-    "swagner-rs",
-    "ExNihilDg",
-    "GBDoNeS",
-    "Felpa_br",
-    "Georges",
-    "gusssz",
-    "perucs_",
-    "s4bot4g3",
-  ];
-
   let postedCount = 0;
   try {
     const postedMatches = loadPostedMatches();
 
-    for (const nickname of playerNickNames) {
+    for (const nickname of playerNicknames) {
       const playerId = await resolvePlayerId(nickname);
       const matchIds = await fetchLatestMatches(playerId);
 
